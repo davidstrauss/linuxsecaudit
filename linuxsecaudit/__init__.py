@@ -11,10 +11,23 @@ def firewall_check():
         rules = subprocess.check_output(['iptables', '--list-rules'], universal_newlines=True)
     except subprocess.CalledProcessError as e:
         return (False, 'Listing rules failed. Return code: {}.'.format(e.returncode))
-    rule_count = len(rules.split('\n'))
+
+    rule_count = 0
+    for line in rules.split('\n'):
+        line = line.strip()
+        if line == '':
+            continue;
+        if line == '-P INPUT ACCEPT':
+            continue;
+        if line == '-P FORWARD ACCEPT':
+            continue;
+        if line == '-P OUTPUT ACCEPT':
+            continue;
+        rule_count += 1;
+
     if rule_count == 0:
-        return (False, 'No rules configured.')
-    return (True, 'Found {} rule(s).'.format(rule_count))
+        return (False, 'No non-ACCEPT rules configured.')
+    return (True, 'Found {} non-ACCEPT rule(s).'.format(rule_count))
 
 def encryption_check():
     try:
