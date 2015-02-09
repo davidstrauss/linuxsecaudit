@@ -1,5 +1,6 @@
 import subprocess
 import errno
+import os
 
 class CheckException(Exception):
     pass
@@ -74,24 +75,47 @@ def encryption_check():
         return (False, 'Mount for path {} appears unencrypted.'.format(path))
     return (True, 'Primary mounts appear to use LUKS and/or OPAL.')
 
-def lock_delay_check():
+def get_human_users():
     try:
-        config = subprocess.check_output(['dconf', 'read', '/org/gnome/desktop/session/idle-delay'], universal_newlines=True)
+        with open('/etc/passwd', 'r') as passwd:
+            users_raw = passwd.read()
+    except Exception as e:
+        raise CheckException('Listing users failed. Error: {}.'.format(e))
+    users = {}
+    for user_line in users_raw.strip().split('\n'):
+        (username, password, uid, gid, uid_info, home_directory, shell) = user_line.split(':')
+        if shell in ['/sbin/nologin', '/sbin/halt', '/sbin/shutdown ', '/bin/sync']:
+            continue  # Non-human user.
+        users[username] = home_directory
+    return users
+
+def get_gnome_lock_seconds_for_user(username, home_directory):
+    if not os.path.isdir(os.path.join(home_directory, '.config')) and not os.path.isdir(os.path.join('/etc/dconf/profile/', username)):
+        return 0  # No dconf for user.
+
+    try:
+        config = subprocess.check_output(['sudo', '-u{}'.format(username), 'dconf', 'read', '/org/gnome/desktop/session/idle-delay'], universal_newlines=True)
     except subprocess.CalledProcessError as e:
-        raise CheckException('Checking screen lock delay failed. Return code: {}.'.format(e.returncode))
+        raise CheckException('Checking GNOME screen lock delay failed. Return code: {}.'.format(e.returncode))
 
-    print(config.strip())
-
-    (numfmt, numraw) = config.strip().split(' ')
-    lock_minutes = round(int(numraw) / 60)
-
+    try:
+        (numfmt, numraw) = config.strip().split(' ')
+    except ValueError:
+        return 0
     if numfmt != 'uint32':
-        return (False, 'Unrecognized number format: {}.'.format(numfmt))
+        raise CheckException('Unrecognized number format: {}.'.format(numfmt))
+    return int(numraw)
 
-    if lock_minutes > 15:
-        return (False, 'Screen lock is set to more than 15 minutes.')
+def is_xscreensaver_custom_for_user(home_directory):
+    return os.path.isfile(os.path.join(home_directory, '.xscreensaver'))
 
-    return (True, 'Screen lock is set to {} minutes.'.format(lock_minutes))
+def lock_delay_check():
+    users = get_human_users()
+    for (username, home_directory) in users.items():
+        seconds = get_gnome_lock_seconds_for_user(username, home_directory)
+        if seconds > 900 or is_xscreensaver_custom_for_user(home_directory):
+            return (False, 'Screen lock for user {} is unknown or too long.'.format(username))
+    return (True, 'Screen lock delays appear compliant.')
 
 def main():
     firewall_result = firewall_check()
@@ -100,5 +124,5 @@ def main():
     encryption_result = encryption_check()
     show_result('Encryption', encryption_result[0], encryption_result[1])
 
-    #lock_result = lock_delay_check()
-    #show_result('Screen Lock', lock_result[0], lock_result[1])
+    lock_result = lock_delay_check()
+    show_result('Screen Lock', lock_result[0], lock_result[1])
