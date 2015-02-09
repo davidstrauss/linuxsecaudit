@@ -1,4 +1,8 @@
 import subprocess
+import errno
+
+class CheckException(Exception):
+    pass
 
 def show_result(name, success, details):
     success_text = '\033[92mPass\033[0m'
@@ -10,7 +14,7 @@ def firewall_check():
     try:
         rules = subprocess.check_output(['iptables', '--list-rules'], universal_newlines=True)
     except subprocess.CalledProcessError as e:
-        return (False, 'Listing rules failed. Return code: {}.'.format(e.returncode))
+        raise CheckException('Listing rules failed. Return code: {}.'.format(e.returncode))
 
     rule_count = 0
     for line in rules.split('\n'):
@@ -29,16 +33,34 @@ def firewall_check():
         return (False, 'No non-ACCEPT rules configured.')
     return (True, 'Found {} non-ACCEPT rule(s).'.format(rule_count))
 
+def device_has_opal_ssc(device_path):
+    try:
+        status = subprocess.check_output(['hdparm', '-I', device_path], universal_newlines=True)
+    except subprocess.CalledProcessError as e:
+        raise CheckException('Checking for OPAL failed. Return code: {}.'.format(e.returncode))
+    security_section = False
+    for line in status.strip().split('\n'):
+        if line.startswith('Security:'):
+            security_section = True
+            continue
+        elif not line.startswith('\t'):  # Non-security section header.
+            security_section = False
+            continue
+        if line.strip() == 'Security level maximum':
+            return True
+    return False
+
 def encryption_check():
     try:
         with open('/proc/mounts', 'r') as mounts_file:
             mounts_data = mounts_file.read()
     except Exception as e:
-        return (False, 'Listing mounts failed. Error: {}.'.format(e))
+        raise CheckException('Listing mounts failed. Error: {}.'.format(e))
 
     mounts = mounts_data.strip().split('\n')
     for mount in mounts:
         (device, path, fs, options, ignored0, ignored1) = mount.split(' ')
+
         if not device.startswith('/'):
             continue  # Not a normal block device.
         if device.startswith('/dev/mapper/luks-'):
@@ -47,14 +69,16 @@ def encryption_check():
             continue  # Boot partitions don't need encyption.
         if path.startswith('/run/media'):
             continue  # Removable media doesn't need encryption.
+        if device_has_opal_ssc(device):
+            continue  # Encrypted with OPAL.
         return (False, 'Mount for path {} appears unencrypted.'.format(path))
-    return (True, 'Primary mounts appear to use LUKS.')
+    return (True, 'Primary mounts appear to use LUKS and/or OPAL.')
 
 def lock_delay_check():
     try:
         config = subprocess.check_output(['dconf', 'read', '/org/gnome/desktop/session/idle-delay'], universal_newlines=True)
     except subprocess.CalledProcessError as e:
-        return (False, 'Checking screen lock delay failed. Return code: {}.'.format(e.returncode))
+        raise CheckException('Checking screen lock delay failed. Return code: {}.'.format(e.returncode))
 
     print(config.strip())
 
