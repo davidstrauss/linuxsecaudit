@@ -1,6 +1,10 @@
 import subprocess
-import errno
 import os
+import http
+import urllib
+import urllib.request
+import json
+import ssl
 
 class CheckException(Exception):
     pass
@@ -119,12 +123,57 @@ def lock_delay_check():
             return (False, 'Screen lock for user {} is unknown or too long.'.format(username))
     return (True, 'Screen lock delays appear compliant.')
 
+def get_machine_id():
+    try:
+        with open('/etc/machine-id', 'r') as machine_id_file:
+            machine_id = machine_id_file.read().strip()
+    except Exception as e:
+        raise CheckException('Retrieving machine ID failed. Error: {}.'.format(e))
+    return machine_id
+
+class HTTPSClientAuthHandler(urllib.request.HTTPSHandler):
+    def https_open(self, req):
+        return self.do_open(self.getConnection, req)
+
+    def getConnection(self, host, timeout=300):
+        client_context = ssl.create_default_context(ssl.Purpose.CLIENT_AUTH)
+        client_context.load_cert_chain('/etc/linuxsecaudit.pem')
+        return http.client.HTTPSConnection(host, context=client_context, timeout=timeout)
+
+def submit_check(machine_id, results):
+    uri = 'https://linuxsecaudit.pantheon.io/{}.json'.format(machine_id)
+    body_data = json.dumps(results, sort_keys=True, indent=4).encode()
+    opener = urllib.request.build_opener(HTTPSClientAuthHandler())
+    request = urllib.request.Request(uri, data=body_data)
+    request.add_header('Content-Type', 'application/json')
+    request.get_method = lambda: 'PUT'
+    response = opener.open(request)
+    response.read()
+
 def main():
+    machine_id = get_machine_id()
+    show_result('Machine ID', True, machine_id)
+
+    results = {}
+
     firewall_result = firewall_check()
     show_result('Firewall', firewall_result[0], firewall_result[1])
+    results['firewall'] = firewall_result
 
     encryption_result = encryption_check()
     show_result('Encryption', encryption_result[0], encryption_result[1])
+    results['encryption'] = encryption_result
 
     lock_result = lock_delay_check()
     show_result('Screen Lock', lock_result[0], lock_result[1])
+    results['screen_lock'] = lock_result
+
+    upload_result = (True, 'Check results uploaded.')
+    try:
+        submit_check(machine_id, results)
+    except FileNotFoundError:
+        upload_result = (False, 'Certificate file not found at /etc/linuxsecaudit.pem')
+    except PermissionError:
+        upload_result = (False, 'Could not read certificate file at /etc/linuxsecaudit.pem')
+
+    show_result('Upload', upload_result[0], upload_result[1])
