@@ -16,6 +16,9 @@ def show_result(name, success, details):
     print('[{}] {}: {}'.format(success_text, name, details))
 
 def firewall_check():
+
+    # @TODO: ip6tables check
+    
     try:
         rules = subprocess.check_output(['iptables', '--list-rules'], universal_newlines=True)
     except subprocess.CalledProcessError as e:

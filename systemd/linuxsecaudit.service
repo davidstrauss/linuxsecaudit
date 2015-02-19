@@ -1,0 +1,6 @@
+[Unit]
+Description=Security auditing tool for Linux systems
+
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/linuxsecaudit

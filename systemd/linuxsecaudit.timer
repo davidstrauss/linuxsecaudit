@@ -1,0 +1,7 @@
+[Timer]
+OnBootSec=60
+OnUnitActiveSec=3600
+AccuracySec=600
+
+[Install]
+WantedBy=multi-user.target
