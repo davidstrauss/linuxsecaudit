@@ -5,7 +5,7 @@
     sudo pip3 install git+https://github.com/pantheon-systems/linuxsecaudit.git
     sudo systemctl enable linuxsecaudit.timer
 
-## Convert PKCS#12 to PEM
+### Converting PKCS#12 to PEM
 
     openssl pkcs12 -in individual.p12 -clcerts -nodes -out individual-with-bags.pem
     openssl x509 -in individual-with-bags.pem > linuxsecaudit.pem
