@@ -1,4 +1,4 @@
-# linux-security
+# Linux Security Audit tool
 
 ## Installation
 
