@@ -2,9 +2,12 @@
 
 ## Installation
 
-    sudo pip3 install git+https://github.com/pantheon-systems/linuxsecaudit.git
-    sudo systemctl start linuxsecaudit.timer
-    sudo systemctl enable linuxsecaudit.timer
+1. Place your individual certificate at `/etc/linuxsecaudit.pem`.
+1. Install and enable the `linuxsecaudit` agent:
+
+        sudo pip3 install git+https://github.com/pantheon-systems/linuxsecaudit.git
+        sudo systemctl start linuxsecaudit.timer
+        sudo systemctl enable linuxsecaudit.timer
 
 ### Converting PKCS#12 to PEM
 
