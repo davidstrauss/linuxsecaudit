@@ -7,8 +7,10 @@
 ## Convert PKCS#12 to PEM
 
     openssl pkcs12 -in individual.p12 -clcerts -nodes -out individual-with-bags.pem
-    openssl x509 -in individual-with-bags.pem > /etc/linuxsecaudit.pem
-    chmod 600 /etc/linuxsecaudit.pem
-    chown root: /etc/linuxsecaudit.pem
-    openssl rsa -in individual-with-bags.pem >> /etc/linuxsecaudit.pem
+    openssl x509 -in individual-with-bags.pem > linuxsecaudit.pem
+    openssl rsa -in individual-with-bags.pem >> linuxsecaudit.pem
     rm individual-with-bags.pem
+    sudo mv linuxsecaudit.pem /etc/linuxsecaudit.pem
+    sudo chmod 600 /etc/linuxsecaudit.pem
+    sudo chown root: /etc/linuxsecaudit.pem
+    
