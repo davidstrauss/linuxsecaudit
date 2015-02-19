@@ -3,6 +3,7 @@
 ## Installation
 
     sudo pip3 install git+https://github.com/pantheon-systems/linuxsecaudit.git
+    sudo systemctl start linuxsecaudit.timer
     sudo systemctl enable linuxsecaudit.timer
 
 ### Converting PKCS#12 to PEM
