@@ -15,6 +15,8 @@ def firewall_check():
     try:
         rules = subprocess.check_output(['iptables', '--list-rules'], universal_newlines=True)
     except subprocess.CalledProcessError as e:
+        if e.returncode == 3:
+            return (False, 'Insufficient access to run check.')
         raise CheckException('Listing rules failed. Return code: {}.'.format(e.returncode))
 
     rule_count = 0
