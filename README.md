@@ -10,7 +10,6 @@
     openssl x509 -in individual-with-bags.pem > linuxsecaudit.pem
     openssl rsa -in individual-with-bags.pem >> linuxsecaudit.pem
     rm individual-with-bags.pem
+    sudo chmod 600 linuxsecaudit.pem
+    sudo chown root: linuxsecaudit.pem
     sudo mv linuxsecaudit.pem /etc/linuxsecaudit.pem
-    sudo chmod 600 /etc/linuxsecaudit.pem
-    sudo chown root: /etc/linuxsecaudit.pem
-    
