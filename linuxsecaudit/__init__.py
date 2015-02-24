@@ -102,8 +102,10 @@ def get_gnome_lock_seconds_for_user(username, home_directory):
     if not os.path.isdir(os.path.join(home_directory, '.config')) and not os.path.isdir(os.path.join('/etc/dconf/profile/', username)):
         return 0  # No dconf for user.
 
+    gsettings_cmd = 'gsettings get org.gnome.desktop.session idle-delay'
+
     try:
-        config = subprocess.check_output(['sudo', '--user={}'.format(username), 'gsettings', 'get', 'org.gnome.desktop.session', 'idle-delay'], universal_newlines=True)
+        config = subprocess.check_output(['su', username, '--command={}'.format(gsettings_cmd)], universal_newlines=True)
     except subprocess.CalledProcessError as e:
         raise CheckException('Checking GNOME screen lock delay failed with error: {}.'.format(e))
 
