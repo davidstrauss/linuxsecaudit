@@ -5,7 +5,7 @@
 1. Place your individual certificate at `/etc/linuxsecaudit.pem` (see below if it's PKCS#12 format).
 1. Install and enable the `linuxsecaudit` agent:
 
-        sudo pip3 install git+https://github.com/pantheon-systems/linuxsecaudit.git
+        sudo pip3 install --upgrade git+https://github.com/pantheon-systems/linuxsecaudit.git
         sudo systemctl start linuxsecaudit.timer
         sudo systemctl enable linuxsecaudit.timer
 
