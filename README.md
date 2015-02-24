@@ -15,7 +15,7 @@
 1. Install and enable the `linuxsecaudit` agent:
 
         sudo yum install -y python3-pip hdparm
-        sudo pip3 install --upgrade git+https://github.com/pantheon-systems/linuxsecaudit.git
+        sudo pip-python3 install --upgrade git+https://github.com/pantheon-systems/linuxsecaudit.git
         sudo systemctl start linuxsecaudit.timer
         sudo systemctl enable linuxsecaudit.timer
 
