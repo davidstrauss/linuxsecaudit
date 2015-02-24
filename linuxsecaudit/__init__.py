@@ -121,8 +121,11 @@ def is_xscreensaver_custom_for_user(home_directory):
 def lock_delay_check():
     users = get_human_users()
     for (username, home_directory) in users.items():
-        seconds = get_gnome_lock_seconds_for_user(username, home_directory)
-        if seconds > 900 or is_xscreensaver_custom_for_user(home_directory):
+        try:
+            gnome_seconds = get_gnome_lock_seconds_for_user(username, home_directory)
+        except CheckException:
+            return (False, 'Screen lock check for user {} failed.'.format(username))
+        if gnome_seconds > 900 or is_xscreensaver_custom_for_user(home_directory):
             return (False, 'Screen lock for user {} is unknown or too long.'.format(username))
     return (True, 'Screen lock delays appear compliant.')
 
@@ -153,7 +156,10 @@ def submit_check(machine_id, results):
     request = urllib.request.Request(uri, data=body_data)
     request.add_header('Content-Type', 'application/json')
     request.get_method = lambda: 'PUT'
-    response = opener.open(request)
+    try:
+        response = opener.open(request)
+    except urllib.error.HTTPError as e:
+        raise CheckException('HTTP error: {}'.format(e))
     response.read()
 
 def main():
@@ -177,6 +183,8 @@ def main():
     upload_result = (True, 'Check results uploaded.')
     try:
         submit_check(machine_id, results)
+    except CheckException as e:
+        upload_result = (False, 'Uploading failed with error: {}. Check the certificate expiration for /etc/linuxsecaudit.pem'.format(e))
     except FileNotFoundError:
         upload_result = (False, 'Certificate file not found at /etc/linuxsecaudit.pem')
     except PermissionError:
