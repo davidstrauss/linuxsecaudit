@@ -142,7 +142,7 @@ class HTTPSClientAuthHandler(urllib.request.HTTPSHandler):
         try:
             client_context = ssl.create_default_context(ssl.Purpose.CLIENT_AUTH)
         except AttributeError:
-            client_context = ssl.SSLContext(ssl.PROTOCOL_TLSv1_2)
+            client_context = ssl.SSLContext()
         client_context.load_cert_chain('/etc/linuxsecaudit.pem')
         return http.client.HTTPSConnection(host, context=client_context, timeout=timeout)
 
