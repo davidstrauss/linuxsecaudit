@@ -141,10 +141,10 @@ class HTTPSClientAuthHandler(urllib.request.HTTPSHandler):
     def getConnection(self, host, timeout=300):
         try:
             client_context = ssl.create_default_context(ssl.Purpose.CLIENT_AUTH)
-            client_context.load_cert_chain('/etc/linuxsecaudit.pem')
-            return http.client.HTTPSConnection(host, context=client_context, timeout=timeout)
         except AttributeError:
-            return http.client.HTTPSConnection(host, cert_file='/etc/linuxsecaudit.pem', key_file='/etc/linuxsecaudit.pem', timeout=timeout)
+            client_context = ssl.SSLContext(ssl.PROTOCOL_TLSv1_2)
+        client_context.load_cert_chain('/etc/linuxsecaudit.pem')
+        return http.client.HTTPSConnection(host, context=client_context, timeout=timeout)
 
 def submit_check(machine_id, results):
     uri = 'https://linuxsecaudit.pantheon.io/{}.json'.format(machine_id)
