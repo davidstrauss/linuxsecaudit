@@ -105,7 +105,7 @@ def get_gnome_lock_seconds_for_user(username, home_directory):
     try:
         config = subprocess.check_output(['sudo', '-u{}'.format(username), 'dconf', 'read', '/org/gnome/desktop/session/idle-delay'], universal_newlines=True)
     except subprocess.CalledProcessError as e:
-        raise CheckException('Checking GNOME screen lock delay failed. Return code: {}.'.format(e.returncode))
+        raise CheckException('Checking GNOME screen lock delay failed with error: {}.'.format(e))
 
     try:
         (numfmt, numraw) = config.strip().split(' ')
@@ -123,8 +123,8 @@ def lock_delay_check():
     for (username, home_directory) in users.items():
         try:
             gnome_seconds = get_gnome_lock_seconds_for_user(username, home_directory)
-        except CheckException:
-            return (False, 'Screen lock check for user {} failed.'.format(username))
+        except CheckException as e:
+            return (False, 'Screen lock check for user {} failed: {}'.format(username, e))
         if gnome_seconds > 900 or is_xscreensaver_custom_for_user(home_directory):
             return (False, 'Screen lock for user {} is unknown or too long.'.format(username))
     return (True, 'Screen lock delays appear compliant.')
