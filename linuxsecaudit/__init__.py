@@ -18,7 +18,7 @@ def show_result(name, success, details):
 def firewall_check():
 
     # @TODO: ip6tables check
-    
+
     try:
         rules = subprocess.check_output(['iptables', '--list-rules'], universal_newlines=True)
     except subprocess.CalledProcessError as e:
@@ -117,8 +117,31 @@ def get_gnome_lock_seconds_for_user(username, home_directory):
         raise CheckException('Unrecognized number format: {}.'.format(numfmt))
     return int(numraw)
 
-def is_xscreensaver_custom_for_user(home_directory):
-    return os.path.isfile(os.path.join(home_directory, '.xscreensaver'))
+def xscreensaver_time_to_seconds(hmmss):
+    (h, m, s) = hmmss.split(':')
+    return int(h) * 3600 + int(m) * 60 + int(s)
+
+def get_xscreensaver_lock_seconds_for_user(home_directory):
+    xscr_config = os.path.join(home_directory, '.xscreensaver')
+
+    # The default configuration is 10 minutes, which is compliant.
+    if not os.path.isfile(xscr_config):
+        return 0
+
+    time_to_lock_keys = ['timeout', 'lockTimtout', 'passwdTimeout']
+
+    time_to_lock = 0
+    with open(xscr_config, 'r') as xscr_config_file:
+        for line in xscr_config_file:
+            for key in time_to_lock_keys:
+                if line.startswith('{}:'.format(key)):
+                    (splitkey, splitvalue) = line.split()
+                    time_to_lock += xscreensaver_time_to_seconds(splitvalue)
+                if line.startswith('lock:'):
+                    (splitkey, splitvalue) = line.split()
+                    if splitvalue != 'True':
+                        return -1
+    return time_to_lock
 
 def lock_delay_check():
     users = get_human_users()
@@ -126,9 +149,19 @@ def lock_delay_check():
         try:
             gnome_seconds = get_gnome_lock_seconds_for_user(username, home_directory)
         except CheckException as e:
-            return (False, 'Screen lock check for user {} failed: {}'.format(username, e))
-        if gnome_seconds > 900 or is_xscreensaver_custom_for_user(home_directory):
-            return (False, 'Screen lock for user {} is unknown or too long.'.format(username))
+            return (False, 'GNOME screen lock check for user {} failed: {}'.format(username, e))
+
+        try:
+            xscr_seconds = get_xscreensaver_lock_seconds_for_user(home_directory)
+        except CheckException as e:
+            return (False, 'XScreenSaver lock check for user {} failed: {}'.format(username, e))
+
+        if gnome_seconds > 900 or gnome_seconds < 0:
+            return (False, 'GNOME screen lock for user {} is disabled or too long.'.format(username))
+
+        if xscr_seconds > 900 or xscr_seconds < 0:
+            return (False, 'XScreenSaver lock for user {} is disabled or too long.'.format(username))
+
     return (True, 'Screen lock delays appear compliant.')
 
 def get_machine_id():
