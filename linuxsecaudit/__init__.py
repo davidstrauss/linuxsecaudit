@@ -56,7 +56,7 @@ def device_has_opal_ssc(device_path):
         elif not line.startswith('\t'):  # Non-security section header.
             security_section = False
             continue
-        if line.strip() == 'Security level maximum':
+        if line.strip() in ['Security level maximum', 'Security level high']:
             return True
     return False
 
