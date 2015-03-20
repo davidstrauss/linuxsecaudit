@@ -23,10 +23,11 @@
 
 1. Export your browser certificate to `individual.p12`.
 2. Convert the certificate to PEM format and put it where the audit tool can find it:
-    openssl pkcs12 -in individual.p12 -clcerts -nodes -out individual-with-bags.pem
-    openssl x509 -in individual-with-bags.pem > linuxsecaudit.pem
-    openssl rsa -in individual-with-bags.pem >> linuxsecaudit.pem
-    rm individual-with-bags.pem
-    chmod 600 linuxsecaudit.pem
-    sudo chown root: linuxsecaudit.pem
-    sudo mv linuxsecaudit.pem /etc/linuxsecaudit.pem
+
+        openssl pkcs12 -in individual.p12 -clcerts -nodes -out individual-with-bags.pem
+        openssl x509 -in individual-with-bags.pem > linuxsecaudit.pem
+        openssl rsa -in individual-with-bags.pem >> linuxsecaudit.pem
+        rm individual-with-bags.pem
+        chmod 600 linuxsecaudit.pem
+        sudo chown root: linuxsecaudit.pem
+        sudo mv linuxsecaudit.pem /etc/linuxsecaudit.pem
