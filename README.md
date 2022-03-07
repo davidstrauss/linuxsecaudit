@@ -1,5 +1,7 @@
 # Linux Security Audit tool
 
+[![Deprecated](https://img.shields.io/badge/Pantheon-Deprecated-yellow?logo=pantheon&color=FFDC28)](https://pantheon.io/docs/oss-support-levels#deprecated)
+
 ## Installation (Fedora 21+)
 
 1. Place your individual certificate at `/etc/linuxsecaudit.pem` (see below if it's PKCS#12 format).
