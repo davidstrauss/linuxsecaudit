@@ -2,9 +2,9 @@
 
 ## Installation (Fedora Silverblue 35+)
 
-1. Install Python PIP:
+1. Install Python PIP and Wheel:
 
-       rpm-ostree install python3-pip
+       rpm-ostree install python3-pip python3-wheel
 
 1. Reboot:
 
