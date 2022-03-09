@@ -1,6 +1,14 @@
 # Linux Security Audit tool
 
-## Installation (Fedora 35+)
+## Installation (Fedora Silverblue 35+)
+
+1. Install Python PIP:
+
+       rpm-ostree install python3-pip
+
+1. Reboot:
+
+       systemctl reboot
 
 1. Install and enable the `linuxsecaudit` agent:
 
